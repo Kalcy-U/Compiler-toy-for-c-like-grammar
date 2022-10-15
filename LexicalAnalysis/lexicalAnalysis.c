@@ -97,7 +97,7 @@ int load_file(const char*filename) {
 /// <returns>非零为真零为假</returns>
 int is_letter(char c)
 {
-	if ((c >= 'a' && c <= 'z') || (c >= 'A' || c <= 'Z'))
+	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
 		return 1;
 	else
 		return 0;
@@ -174,7 +174,7 @@ int lex_next() {
 		else if (ch == '\n')
 			++line;
 		else if (ch == ' ' || ch == '\t' || ch == '\r')
-			;
+			continue;
 		else if (is_letter(ch)) { //以字母开头，可能是标识符或关键字
 			//识别一个标识符或关键字,标识符需要维护标识符表
 			read_identifier();
