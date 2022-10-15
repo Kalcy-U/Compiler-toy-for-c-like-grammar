@@ -25,7 +25,7 @@ int lex_next();
 int read_identifier();
 int is_letter(char c);
 int is_digit(char c);
-int read_num(char* p);
+int read_num();
 void usage(const char* programname);
 int lexer();
 
@@ -50,9 +50,7 @@ int main(int argc,char** argv) {
 	}
 
 	/****lexical analysis****/
-
 	lexer();
-
 	/****free memory****/
 	if(srccode)
 		free(srccode);
@@ -117,12 +115,29 @@ int is_digit(char c)
 }
 
 /// <summary>
-/// 从p开始读出一个int数字
+/// 从token_start_pos开始读出一个int数字
+/// 可以读取 十进制、0x下十六进制、0下八进制
 /// </summary>
-/// <returns>返回读出的值</returns>
-int read_num(char* p) {
-
-	return 0;
+/// <returns>返回读取的值</returns>
+int read_num() {
+	int result = *token_start_pos - '0';
+	cur_ch =token_start_pos + 1;
+	if (result > 0) {
+		while (*cur_ch >= '0' && *cur_ch <= '9')
+			result = result * 10 + *cur_ch++ - '0';
+	}
+	else if (*cur_ch == 'x' || *cur_ch == 'X') {
+		char c = *++cur_ch;
+		while ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			result = result * 16 + (c & 15) + (c >= 'A' ? 9 : 0);
+			c = *++cur_ch;
+		}
+	}
+	else {
+		while (*cur_ch >= '0' && *cur_ch <= '7')
+			result = result * 8 + *cur_ch++ - '0';
+	}
+	return result;
 }
 
 
@@ -132,9 +147,52 @@ int read_num(char* p) {
 /// 如果不是关键字，则认为是标识符。搜索标识符表比对哈希值，查询标识是否已经出现过，如果没有出现过则加入标识符表。
 /// 需要确保cur_ch最终指向语素尾部的下一个字符，保证下一个语素分析的起始位置正确
 /// </summary>
-/// <returns>(</returns>
+/// <returns>目前关键字返回标记值，标识符返回索引值的相反数</returns>
 int read_identifier() {
-	return 0;
+	cur_ch = token_start_pos+1;
+	while ((*cur_ch >= 'a' && *cur_ch <= 'z') || (*cur_ch >= 'A' && *cur_ch <= 'Z') || (*cur_ch >= '0' && *cur_ch <= '9'))
+		cur_ch++;
+	int len = cur_ch - token_start_pos;
+	if (len == 3 && strncmp(token_start_pos, "int", 3) == 0) {
+		token_type = Int;
+		return Int;
+	}
+	else if (len == 4 && strncmp(token_start_pos, "void", 4) == 0) {
+		token_type = Void;
+		return Void;
+	}
+	else if (len == 2 && strncmp(token_start_pos, "if", 2) == 0) {
+		token_type = If;
+		return If;
+	}
+	else if (len == 4 && strncmp(token_start_pos, "else", 4) == 0) {
+		token_type = Else;
+		return Else;
+	}
+	else if (len == 5 && strncmp(token_start_pos, "While", 5) == 0) {
+		token_type = While;
+		return While;
+	}
+	else if (len == 6 && strncmp(token_start_pos, "return", 6) == 0) {
+		token_type = Return;
+		return Return;
+	}
+	token_type = Identifier;
+	char* p = token_start_pos;
+	int hash = 0;
+	while ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') || (*p >= '0' && *p <= '9'))
+		hash = hash * 147 + *p++;
+	int index = 0;
+	for (; index < 256; index++) {
+		if (Id_table[index].hash_id == hash)
+			return -index;
+	}
+	//暂未考虑超出表容量
+	Id_table[index].hash_id = hash;
+	Id_table[index].name = token_start_pos;
+	Id_table[index].namelen = len;
+	Id_table[index].token = Identifier;
+	return -index;
 }
 
 
@@ -145,7 +203,7 @@ int read_identifier() {
 int lexer() {
 	char buffer[20];
 	int token_len;
-	printf("token key				token value\n");
+	printf("token key				token type\n");
 	while (lex_next() == LEXER_SUCCESS) {
 		token_len = cur_ch - token_start_pos;
 		memcpy(buffer, token_start_pos, cur_ch - token_start_pos);
@@ -162,19 +220,17 @@ int lexer() {
 /// </returns>
 int lex_next() {
 	char ch = 0;					//当前字符
-	int ret = 0;
-
+	//int ret = 0;
 	while (1) {
 		ch = *cur_ch;
 		token_start_pos = cur_ch;
-		++cur_ch;//按理说应该放在循环末尾，但为了半成品能有输出姑且放这里
 		if (ch == 0) {//EOF
 			return LEXER_END;
 		}
 		else if (ch == '\n')
 			++line;
 		else if (ch == ' ' || ch == '\t' || ch == '\r')
-			continue;
+			;
 		else if (is_letter(ch)) { //以字母开头，可能是标识符或关键字
 			//识别一个标识符或关键字,标识符需要维护标识符表
 			read_identifier();
@@ -183,21 +239,76 @@ int lex_next() {
 		}
 		else if (is_digit(ch)) {
 			//识别一个正整数
-			token_value = read_num(token_start_pos);
+			token_value = read_num();
 			token_type = Num;
 			return LEXER_SUCCESS;
 		}
 		//TODO:算符 + | - | * | / | = | == | > | >= | < | <= | != 
-
+		else if (*(cur_ch + 1) == '=' && ch == '=') {
+			token_type = Equal;
+			cur_ch+=2;
+			return LEXER_SUCCESS;
+		}
+		else if (*(cur_ch + 1) == '!' && ch == '=') {
+			token_type = NEq;
+			cur_ch += 2;
+			return LEXER_SUCCESS;
+		}
+		else if (*(cur_ch + 1) == '>' && ch == '=') {
+			token_type = GEq;
+			cur_ch += 2;
+			return LEXER_SUCCESS;
+		}
+		else if (*(cur_ch + 1) == '<' && ch == '=') {
+			token_type = LEq;
+			cur_ch += 2;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '+') {
+			token_type = Add;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '-') {
+			token_type = Sub;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '*') {
+			token_type = Mul;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '/') {
+			token_type = Div;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '=') {
+			token_type = Assign;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '>') {
+			token_type = Greater;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
+		else if (ch == '<') {
+			token_type = Less;
+			cur_ch++;
+			return LEXER_SUCCESS;
+		}
 		else if (ch == ';' || ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ',') {
 			token_type = ch;//用字符的ASC本身标识token类型
+			cur_ch++;
 			return LEXER_SUCCESS;
 		}
 		else
 		{
-			//return LEXER_ERROR;//遇到未知符号报错
+			return LEXER_ERROR;//遇到未知符号报错
 		}
-
+		cur_ch++;
 	}
 	return 0;
 }
