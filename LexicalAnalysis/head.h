@@ -7,11 +7,15 @@
 
 #define LEXER_SUCCESS 0
 #define LEXER_END 1
+#define LEXER_START 2
+
+#define LOG_ERROR 3
+#define LOG_SUCCESS 4
 
 enum TType{
 	Num = 128, Identifier,
 	Int, Void, If, Else, While, Return,
-	Assign, Add, Sub, Mul, Div, Equal, Greater, GEq, Less, LEq, NEq // =|+| -| *| / | == | > | >= | < | <= | !=
+	Assign, Add, Sub, Mul, Div, Equal, Greater, GEq, Less, LEq, NEq // +| -| *| / | = | == | > | >= | < | <= | !=
 	//其他符号（如{}(),;等)为单一符号，用自身的ASC值表示
 };
 
