@@ -12,12 +12,14 @@ char* cur_ch=NULL;		//当前字符指针
 char* token_start_pos = NULL;	//当前token的首字符指针
 int token_type = 0;			//当前token的类型
 int token_value = 0;		//当前token的值，Num类型存数值
+int Id_count=0;			//标识符列表Id_table中ID的个数
+
 
 /****不经常改变的全局变量*****/
-int poolsize= 64 * 1024;   //默认的缓冲区和栈大小
-char* srccode;		//源代码字符串首地址
-IdInfo* Id_table;	//标识符列表的首地址
-
+size_t poolsize= 64 * 1024;   //默认的缓冲区和栈大小
+char* srccode=NULL;		//源代码字符串首地址
+IdInfo* Id_table=NULL;	//标识符列表的首地址
+int Id_table_len=128;	//当前标识符列表长度
 
 /****函数声明****/
 int load_file(const char* filename);
@@ -44,7 +46,7 @@ int main(int argc,char** argv) {
 	if (load_file(argv[1]) == START_FAIL)
 		return START_FAIL;
 
-	if (!(Id_table = (IdInfo*)malloc(256*sizeof(IdInfo)))) {
+	if (!(Id_table = (IdInfo*)malloc(Id_table_len*sizeof(IdInfo)))) {
 		printf("malloc failed.\n");
 		return START_FAIL;
 	}
@@ -52,8 +54,11 @@ int main(int argc,char** argv) {
 	/****lexical analysis****/
 	lexer();
 	/****free memory****/
+	
 	if(srccode)
 		free(srccode);
+	if (Id_table)
+		free(Id_table);
 	return 0;
 }
 /// <summary>
@@ -62,7 +67,7 @@ int main(int argc,char** argv) {
 /// <param name="filename"></param>
 /// <returns></returns>
 int load_file(const char*filename) {
-	int srccode_size;
+	size_t srccode_size;
 	FILE* fp=NULL;
 	if ((fp = fopen(filename, "rb")) == NULL) {
 		printf("failed to open %s.\n", filename);
@@ -76,7 +81,7 @@ int load_file(const char*filename) {
 		printf("malloc failed.\n");
 		return START_FAIL;
 	}
-	if ((fread(srccode,1, srccode_size,fp)) !=srccode_size) {
+	if ((fread(srccode,sizeof(char), srccode_size, fp)) != srccode_size) {
 		printf("read failed(%d)\n", srccode_size);
 		return START_FAIL;
 	}
@@ -152,7 +157,7 @@ int read_identifier() {
 	cur_ch = token_start_pos+1;
 	while ((*cur_ch >= 'a' && *cur_ch <= 'z') || (*cur_ch >= 'A' && *cur_ch <= 'Z') || (*cur_ch >= '0' && *cur_ch <= '9'))
 		cur_ch++;
-	int len = cur_ch - token_start_pos;
+	int len = (int)(cur_ch - token_start_pos);
 	if (len == 3 && strncmp(token_start_pos, "int", 3) == 0) {
 		token_type = Int;
 		return Int;
@@ -182,17 +187,31 @@ int read_identifier() {
 	int hash = 0;
 	while ((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') || (*p >= '0' && *p <= '9'))
 		hash = hash * 147 + *p++;
+	
+
 	int index = 0;
-	for (; index < 256; index++) {
+	for (; index < Id_count; index++) {
 		if (Id_table[index].hash_id == hash)
 			return -index;
 	}
-	//暂未考虑超出表容量
-	Id_table[index].hash_id = hash;
-	Id_table[index].name = token_start_pos;
-	Id_table[index].namelen = len;
-	Id_table[index].token = Identifier;
-	return -index;
+	if (Id_count >= Id_table_len) {
+		//扩容Id_table
+		IdInfo* tempp=NULL;
+		tempp=realloc(Id_table, sizeof(IdInfo) * 2 * Id_table_len);
+		if (tempp == NULL) {
+			printf("malloc failed.\n");
+			return LEXER_ERROR;
+		}
+		else{
+			Id_table = tempp;
+		}
+	}
+	Id_table[Id_count].hash_id = hash;
+	Id_table[Id_count].name = token_start_pos;
+	Id_table[Id_count].namelen = len;
+	Id_table[Id_count].token = Identifier;
+	++Id_count;
+	return Identifier;
 }
 
 
@@ -203,14 +222,23 @@ int read_identifier() {
 int lexer() {
 	char buffer[20];
 	int token_len;
+	int lexer_ret=0;
 	printf("token key				token type\n");
-	while (lex_next() == LEXER_SUCCESS) {
-		token_len = cur_ch - token_start_pos;
+	while ((lexer_ret=lex_next()) == LEXER_SUCCESS) {
+		token_len = (int)(cur_ch - token_start_pos);
 		memcpy(buffer, token_start_pos, cur_ch - token_start_pos);
 		buffer[token_len] = 0;
 		printf("%-40s%d\n", buffer, token_type);
 	}
-	return 0;
+	if (lexer_ret == LEXER_ERROR)
+	{
+		printf("ERROR: unexpected sign in line %d.\n",line);
+		return LEXER_ERROR;
+	}
+	
+	printf("Lexical analysis succeeded.\n");
+	
+	return LEXER_END;
 }
 
 /// <summary>
@@ -220,7 +248,7 @@ int lexer() {
 /// </returns>
 int lex_next() {
 	char ch = 0;					//当前字符
-	//int ret = 0;
+	int temp = 0;
 	while (1) {
 		ch = *cur_ch;
 		token_start_pos = cur_ch;
@@ -243,7 +271,30 @@ int lex_next() {
 			token_type = Num;
 			return LEXER_SUCCESS;
 		}
-		//TODO:算符 + | - | * | / | = | == | > | >= | < | <= | != 
+		//TODO:注释
+		else if (ch == '/') {
+			++cur_ch;
+			if (*cur_ch == '/')
+				while (*(cur_ch) != '\n') {
+					if (*cur_ch == 0)
+						return LEXER_END;
+					++cur_ch;
+				}
+			else if (*cur_ch == '*') {
+				cur_ch++;
+				while (1) {
+					if (*cur_ch == 0)
+						return LEXER_END;
+					if (*cur_ch == '*' && *(cur_ch+1) == '/') {
+						cur_ch += 2;
+						break;
+					}
+					++cur_ch;
+				}
+				
+			}
+			continue;
+		}
 		else if (*(cur_ch + 1) == '=' && ch == '=') {
 			token_type = Equal;
 			cur_ch+=2;
