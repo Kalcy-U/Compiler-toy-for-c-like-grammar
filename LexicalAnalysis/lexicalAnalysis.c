@@ -50,11 +50,9 @@ int main(int argc,char** argv) {
 		printf("malloc failed.\n");
 		return START_FAIL;
 	}
-
 	/****lexical analysis****/
 	lexer(argv[1]);
 	/****free memory****/
-	
 	if(srccode)
 		free(srccode);
 	if (Id_table)
@@ -223,7 +221,7 @@ int read_identifier() {
 int lexer(const char* filename) {
 	int lexer_ret=0;
 	FILE* fp;
-	fp = fopen("lexicalAnalysis.log", "wb");
+	fp = fopen("lexicalAnalysis.log", "w");
 	if (fp == NULL) {
 		printf("Log File Create Failed");
 		return START_FAIL;
@@ -246,7 +244,7 @@ int lexer(const char* filename) {
 /// </returns>
 int lex_next() {
 	char ch = 0;					//当前字符
-	int temp = 0;
+	//int temp = 0;
 	while (1) {
 		ch = *cur_ch;
 		token_start_pos = cur_ch;
@@ -364,10 +362,13 @@ int lex_next() {
 	}
 	return 0;
 }
-/// <summary>
-/// 输出单步词法分析结果到fp指向文件中
+/// <summary>根据词法分析状态写日志 
+///START：输出日志抬头，目前只有要编译的文件名 
+/// SUCCESS：以三元组格式输出词法分析结果 （分词，分词大类如关键字、标识符、算符等，实际采用的类型标记值）
+/// ERROR：输出错误字符及所在行号
+/// END：输出结束信息，目前只有成功和失败提示 
 /// </summary>
-/// <returns>
+/// <returns>返回日志输出状态
 /// </returns>
 int log_lexinfo(FILE* fp,const int lexstatus,const char* filename) {
 	int token_len;
@@ -376,7 +377,7 @@ int log_lexinfo(FILE* fp,const int lexstatus,const char* filename) {
 		fprintf(fp, "Compiled File: %s\n",filename);
 		//可以再加入一些日志信息
 		fprintf(fp, "###LEXER_RUNINFO###\n");
-		fprintf(fp, "Token_Name				Token_Type      Type_Code\n");
+		fprintf(fp, "Token_Name				Token_Type       Type_Code\n");
 	}
 	else if (lexstatus == LEXER_SUCCESS) {
 		token_len = (int)(cur_ch - token_start_pos);
@@ -389,7 +390,7 @@ int log_lexinfo(FILE* fp,const int lexstatus,const char* filename) {
 		if (Token_Type == NULL)
 			return LOG_ERROR;
 		Token_Type[13] = 0;
-		if (token_type == Int || Token_Type == Void || Token_Type == If || Token_Type == Else || Token_Type == While || Token_Type == Return)
+		if (token_type == Int || token_type == Void || token_type == If || token_type == Else || token_type == While || token_type == Return)
 			memcpy(Token_Type, "KEYWORD", 8);
 		else if(token_type==Identifier)
 			memcpy(Token_Type, "IDENTIFIER", 11);
@@ -397,7 +398,7 @@ int log_lexinfo(FILE* fp,const int lexstatus,const char* filename) {
 			memcpy(Token_Type, "NUM", 4);
 		else if(token_type==Assign)
 			memcpy(Token_Type, "ASSIGN", 7);
-		else if(token_type>=Add&&Token_Type<=NEq)
+		else if(token_type>=Add&&token_type<=NEq)
 			memcpy(Token_Type, "OPERATOR", 9);
 		else if(token_type==';')
 			memcpy(Token_Type, "DELIMITER", 10);
@@ -411,12 +412,12 @@ int log_lexinfo(FILE* fp,const int lexstatus,const char* filename) {
 			memcpy(Token_Type, "LEFT_BRACE", 11);
 		else if (token_type == '}')
 			memcpy(Token_Type, "RIGHT_BRACE", 12);
-		fprintf("%-40s%s%d\n", Token_Name, Token_Type, token_type);
+		fprintf(fp,"%-40s%-20s%d\n", Token_Name, Token_Type, token_type);
 		free(Token_Name);
 		free(Token_Type);
 	}
 	else if (lexstatus == LEXER_ERROR){
-		fprintf("ERROR: Unexpected sign %c in line %d.\n",*cur_ch,line);
+		fprintf(fp,"ERROR: Unexpected sign %c in line %d.\n",*cur_ch,line);
 	}
 	else if (lexstatus == LEXER_END) {
 		if(*cur_ch==0)
