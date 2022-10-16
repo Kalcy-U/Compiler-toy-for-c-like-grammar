@@ -274,12 +274,14 @@ int lex_next() {
 		//TODO:×¢ÊÍ
 		else if (ch == '/') {
 			++cur_ch;
-			if (*cur_ch == '/')
+			if (*cur_ch == '/') {
 				while (*(cur_ch) != '\n') {
 					if (*cur_ch == 0)
 						return LEXER_END;
 					++cur_ch;
 				}
+				continue;
+			}
 			else if (*cur_ch == '*') {
 				cur_ch++;
 				while (1) {
@@ -291,9 +293,14 @@ int lex_next() {
 					}
 					++cur_ch;
 				}
-				
+				continue;
 			}
-			continue;
+			else
+			{
+				token_type = Div;
+				cur_ch++;
+				return LEXER_SUCCESS;
+			}
 		}
 		else if (*(cur_ch + 1) == '=' && ch == '=') {
 			token_type = Equal;
@@ -330,11 +337,7 @@ int lex_next() {
 			cur_ch++;
 			return LEXER_SUCCESS;
 		}
-		else if (ch == '/') {
-			token_type = Div;
-			cur_ch++;
-			return LEXER_SUCCESS;
-		}
+		
 		else if (ch == '=') {
 			token_type = Assign;
 			cur_ch++;
