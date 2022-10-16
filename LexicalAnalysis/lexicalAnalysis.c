@@ -203,6 +203,7 @@ int read_identifier() {
 			return LEXER_ERROR;
 		}
 		else{
+			Id_table_len = Id_table_len *2;
 			Id_table = tempp;
 		}
 	}
