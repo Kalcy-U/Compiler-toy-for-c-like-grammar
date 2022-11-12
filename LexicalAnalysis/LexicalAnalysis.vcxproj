@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="hello.c" />
     <ClCompile Include="lexicalAnalysis.c" />
+    <ClCompile Include="语法分析.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="head.h" />

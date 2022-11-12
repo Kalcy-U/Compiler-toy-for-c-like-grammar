@@ -1,0 +1,9 @@
+8
+A->A+B
+A->B
+B->B*C
+B->C
+C->D^C
+C->D
+D->(A)
+D->s
