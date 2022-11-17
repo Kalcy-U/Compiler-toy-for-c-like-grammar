@@ -129,7 +129,9 @@
   <ItemGroup>
     <ClCompile Include="hello.c" />
     <ClCompile Include="lexicalAnalysis.c" />
-    <ClCompile Include="语法分析.cpp" />
+    <ClCompile Include="语法分析.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="head.h" />

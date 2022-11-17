@@ -8,7 +8,11 @@
 #define Max_Vsign 128
 #define Max_Vn 40
 
-#define Vt_Start 's'
+#define Vn_Start 'A'
+#define Vn_end 'f'
+
+
+#define Vt_Start 'r'
 #define Vt_end 'z'
 
 #define myEpsilon '@'
@@ -91,13 +95,11 @@ struct params
 	int closure_eachlength[Max_num];
 
 
-
 	/*
-	Action/Goto表每一格的动作。
+	elem : Action/Goto表每一格的动作。
 
 	kind指明移进、规约、acc还是错误；
-	next以下标指明项目集族。
-
+	num以下标指明项目集族。
 	*/
 	struct elem
 	{
@@ -106,17 +108,10 @@ struct params
 	};
 
 	/*
-	Action表
-		在构建closure的时候初始化，申请空间，并一并构建。
+	ActionGoto表
+		在构建closure的时候初始化，申请空间，并同时完成构建。
 	*/
 	elem* ActionGoto[Max_num];
-
-
-
-	/*
-	Goto表
-	*/
-	//elem Goto[Max_num][Max_Vsign];
 
 
 
@@ -184,16 +179,16 @@ struct params
 
 
 	/*
-	已变更：
-	根据传入的i=curclosure，用closure[i]和closure_eachlength[i]来构造项目集；
-	结果放入当前的closure[i]中，并刷新closure_eachlength，(可选)重新申请适合长度的空间。
+	构造项目集：
+		根据传入的i=curclosure，用closure[i]和closure_eachlength[i]来构造项目集；
+		结果放入当前的closure[i]中，并刷新closure_eachlength，(还没做)重新申请适合长度的空间。
 	*/
 	void setClosure(int curclosure_num);
 
 
-
 	/*
 		根据buffer和输入的buf_projcnt来构造一个项目，结果存回buffer中，返回新的buf_projcnt。
+		*未使用
 	*/
 	project buffer[Max_num];
 	int getclosure(int buf_projcnt);
@@ -203,7 +198,7 @@ struct params
 	查重1：
 	将项目集src和当前项目集族内所有项目集相比较；
 		如果没有重复，返回-1；
-		如果重复，返回重复项目集的下标。
+		如果重复（！！或被包含），返回重复项目集的下标。
 	*/
 	int dupcheck(int src);
 
@@ -214,21 +209,17 @@ struct params
 	void showActionGoto();
 
 	/*
-	获得向前搜索符。
+	获得项目的向前搜索符。
 	*/
 	string get_firstBa(project src);
 
 
+	/*
+	判断句子是否是该文法的语言
+	*/
+	int judge(const char* sentensepath);
+
 };
-
-
-
-
-/*
-判断句子是否是该文法的语言
-*/
-void judge(params* param, const char* sentensepath);
-
 
 
 
@@ -256,7 +247,7 @@ bool params::First_trans(char Vn, char Vt)
 		return First[(int)Vn - 'A'][Vt];
 
 	else
-		return First[(int)Vn - 'a' + 26][Vt];
+		return First[(int)(Vn - 'a') + 26][Vt];
 
 }
 
@@ -332,51 +323,6 @@ void params::showGrammar()
 
 	return;
 };
-
-/*
-* 我感觉参照的那个方法太麻烦了 四重循环了都 按照书上的写一写试一试
-void params::set_First()
-{
-	bool done = false;
-
-	while (!done)//第一层循环
-	{
-		int t;
-		bool isepsilon;
-		for (int i = 0; i < prodsum; i++)
-		{
-			char* cur = G[i];
-
-			t = 1;
-			isepsilon = true;
-
-			while (t < strlen(G[i]) && isepsilon)
-			{
-				if (cur[t] >= 'A' && cur[t] < Vt_Start)
-				{
-					for (int k = 0; k < '@'; k++)
-					{
-						if (First[cur[t]][k] == true)
-							First[cur[0]][k] = true;//右部符号是
-
-					}
-
-
-				}
-
-			}
-
-
-		}
-
-
-
-	}
-
-
-}
-*/
-
 
 void params::insert(stack<pair>* mystack, pair cur)
 {
@@ -487,21 +433,6 @@ void params::showFirst()
 
 		cout << endl;
 	}
-	/*
-	for (int i = 0; i < Max_Vn; i++)
-	{
-		cout << char('A' + i) << " : ";
-
-		for (int j = 0; j < Max_Vsign; j++)
-		{
-			if (isV[j] == isVt)
-			{
-				cout << (int)First[i][j] << " ";
-			}
-		}
-		cout << endl;
-	}
-	*/
 
 	return;
 }
@@ -510,14 +441,19 @@ void params::showFirst()
 
 string params::get_firstBa(project src)
 {
+	string rst = "";
+
 	if (G[src.prod][src.dot + 2] == 0)//.后面的第二个字符是空
 		return src.next;
+	else if (isV[G[src.prod][src.dot + 2]] == isVt)//.后面的第二个字符是终结符
+	{
+		rst += G[src.prod][src.dot + 2];
+		return rst;
+	}
 	else
 	{
-		string rst;
 		for (int j = 0; j < Max_Vsign; j++)
 		{
-
 			if (First_trans(G[src.prod][src.dot + 2], char(j)) == true)
 				rst += char(j);
 		}
@@ -532,28 +468,47 @@ int params::dupcheck(int src)
 	bool isdup = false;
 
 	project* srcclosure = closure[src];
+	int* isfound = new int[closure_eachlength[src]];
 
 	for (int i = 0; i < closure_sum; i++)
 	{
 		if (i == src)
 			continue;
-
+		for (int j = 0; j < closure_eachlength[src]; j++)
+			isfound[j] = 0;
+		int curproj = 0;
 		project* curclosure = closure[i];
 
 		bool cur_isdup = true;
 		for (int k = 0; k < closure_eachlength[src]; k++)
 		{
-			if (!(curclosure[k] == srcclosure[k]))
+			for (int m = 0; m < closure_eachlength[i]; m++)
 			{
-				cur_isdup = false;
-				break;
+				if (isfound[k] == true)
+					continue;
+
+				if (srcclosure[k].prod == curclosure[m].prod && srcclosure[k].dot == curclosure[m].dot && curclosure[m].next.find(srcclosure[k].next) != curclosure[m].next.npos)
+				{
+					isfound[k] = true;
+				}
 			}
 		}
 
+		for (int j = 0; j < closure_eachlength[src]; j++)
+		{
+			if (isfound[j] == false)
+				cur_isdup = false;
+		}
+
 		if (cur_isdup == true)
+		{
+			delete[]isfound;
 			return i;
+		}
 	}
 	
+	delete[]isfound;
+
 	return Noduplicate;
 }
 
@@ -633,128 +588,6 @@ int params::getclosure(int buf_projcnt)
 }
 
 
-/*
-void params::set_Closure_and_Action()
-{
-
-	project* quebuf[Max_num];
-	bool quebuf_used[Max_num];
-	for (int i = 0; i < Max_num; i++)
-		quebuf_used[i] = false;
-
-	queue<project*> buf_que;
-	queue<int> bufcnt_que;
-
-	//首先要构造项目集0:
-	buffer[0].prod = 0;
-	buffer[0].dot = 0;
-	buffer[0].next = myFinal;
-	
-	quebuf[0] = new project[1];
-	quebuf[0][0] = buffer[0];
-	buf_projcnt = 1;
-	quebuf_used[0] = true;
-
-	closure_sum = 0;
-	/*
-
-	int buf_projcnt = getClosure(buffer, 1);
-
-	closure[0] = new project[buf_projcnt]();
-	for (int j = 0; j < buf_projcnt; j++)
-		closure[0][j] = buffer[j];
-
-	closure_length[0] = buf_projcnt;
-	closure_sum++;
-	delete[] buffer;
-	*/
-/*
-	buf_que.push(quebuf[0]);
-	bufcnt_que.push(1);
-
-	while (!buf_que.empty())
-	{
-		project* temp = buf_que.front();
-		buf_projcnt = bufcnt_que.front();
-		buf_que.pop();
-		bufcnt_que.pop();
-
-		for (int i = 0; i < buf_projcnt; i++)
-			buffer[i] = temp[i];
-
-		buf_projcnt = getClosure();
-		closure[closure_sum] = new project[buf_projcnt]();
-		for (int j = 0; j < buf_projcnt; j++)
-			closure[closure_sum][j] = buffer[j];
-		closure_length[closure_sum] = buf_projcnt;
-		closure_sum++;
-
-		if (G[buffer[0].prod][buffer[0].dot + 1] == 0)//如果这个项目集已经是终结状态
-		{
-			delete[] temp;
-			quebuf_used[];;////' gfvvvvvvvvvvvvvvvvvvvgbgvvvg
-
-			continue;
-		}
-
-
-		int next_projcnt = 0;
-		bool* isused = new bool[buf_projcnt]();
-		for (int i = 0; i < buf_projcnt; i++)
-			isused[i] = false;
-		int temp_sel[Max_num];
-
-		for (int j = 0; j < buf_projcnt; j++)
-		{
-			if (isused[j] == true)
-				continue;
-
-			char X = G[buffer[j].prod][buffer[j].dot + 1];
-			next_projcnt = 1;
-			temp_sel[0] = j;
-			isused[j] = true;
-
-			for (int k = 0; k < buf_projcnt && isused[k] == false; k++)//使用某个字符后，如果有其他的项目能够使用该字符而让.往前读一个，那么它也要用来产生新闭包。
-			{
-				char tmp = G[buffer[k].prod][buffer[k].dot + 1];
-				if (tmp == X)
-				{
-					temp_sel[next_projcnt] = k;
-					next_projcnt++;
-					isused[k] = true;
-				}
-			}
-
-			project* next = new project[next_projcnt];
-
-			for (int i = 0; i < next_projcnt; i++)
-			{
-				project temp;
-				temp.prod = buffer[temp_sel[i]].prod;
-				temp.dot = buffer[temp_sel[i]].dot + 1;
-				temp.next = buffer[temp_sel[i]].next;
-
-				next[i] = temp;
-			}
-			
-			buf_que.push(next);
-			bufcnt_que.push(next_projcnt);
-
-		}
-	
-		break;
-	}
-
-
-
-
-
-	return;
-}
-*/
-
-
-
 void params::set_Closure_and_Action()
 {
 	//为ActionGoto表申请空间并初始化
@@ -791,6 +624,8 @@ void params::set_Closure_and_Action()
 
 		setClosure(curclosure_num);
 
+		//showClosures();
+		
 		/*
 		以下为根据当前closure构建新的closure基底，并同时填ActionGoto表。
 		*/
@@ -806,8 +641,10 @@ void params::set_Closure_and_Action()
 				closure_eachlength[nextclosure]++;
 
 
-				for (int k = 0; k != j && k < closure_eachlength[curclosure_num]; k++)//如果还有.后面非空且和X相同的项目，也要加入新项目集中
+				for (int k = 0;k < closure_eachlength[curclosure_num]; k++)//如果还有.后面非空且和X相同的项目，也要加入新项目集中
 				{
+					if (k == j)
+						continue;
 					char X2 = G[curclosure[k].prod][curclosure[k].dot + 1];
 					if (X2 == X)
 					{
@@ -884,13 +721,6 @@ void params::set_Closure_and_Action()
 }
 
 
-
-
-
-
-
-
-
 void params::showClosures()
 {
 	for (int i = 0; i < closure_sum; i++)
@@ -951,11 +781,81 @@ void params::showActionGoto()
 
 
 
+int params::judge(const char* sentensepath)
+{
+	stack<int> status;
+	string SRstr = "";
+	string instr;
+
+	ifstream infile;
+	infile.open(sentensepath, ios::in);
+	infile >> instr;
+
+	instr += myFinal;
+
+	status.push(0);
+
+
+	bool isdone = false;
+	while (!isdone)
+	{
+		int cur = status.top();
+
+		if (1)
+		{
+			cout << "移进归约串 : " << SRstr << "            " << "输入串 : " << instr << "         " << "状态 : ";
+			stack<int> tempstack = status;
+			for (int i = 0; i < status.size(); i++)
+			{
+				cout << tempstack.top();
+				tempstack.pop();
+			}
+			cout << endl;
+		}
+
+		if (ActionGoto[cur][instr[0]].kind == 'a')//接受状态
+		{
+			isdone = true;
+			return 1;
+		}
+		else if (ActionGoto[cur][instr[0]].kind == 's')//移进
+		{
+			status.push(ActionGoto[cur][instr[0]].num);
+			SRstr += instr[0];
+			instr.erase(instr.begin(), instr.begin() + 1);
+		}
+		else if (ActionGoto[cur][instr[0]].kind == 'r')//归约
+		{
+
+			int prodBlength = 0;//调用的产生式的右部长度
+			int rprod = ActionGoto[cur][instr[0]].num;
+			while (G[rprod][prodBlength + 1] != 0)
+				prodBlength++;
+
+			for (int i = 0; i < prodBlength; i++)
+				status.pop();
+
+			int statusbefore = status.top();
+			status.push(ActionGoto[statusbefore][G[rprod][0]].num);
+			SRstr.erase(SRstr.end() - prodBlength, SRstr.end());
+			SRstr += G[rprod][0];
+		}
+		else
+			return -1;
+	}
+
+	infile.close();
+
+	return -1;
+}
+
+
+
 
 int main()
 {
 	params param;
-	param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammar3.txt");
+	param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammar4.txt");
 	param.showGrammar();
 
 	cout << param.Vn_sum << "   " << param.Vt_sum << endl;
@@ -967,6 +867,8 @@ int main()
 	param.showClosures();
 
 	param.showActionGoto();
+
+	cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testsentence.txt");
 
 
 	return 0;

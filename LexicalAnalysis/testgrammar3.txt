@@ -1,5 +1,5 @@
 4
 A->S
-S->BB
+S->By
 B->xB
-B->y
+B->x
