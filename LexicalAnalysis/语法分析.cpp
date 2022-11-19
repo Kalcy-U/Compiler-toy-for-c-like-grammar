@@ -2,7 +2,7 @@
 #define isVt 1
 #define isVn 2
 
-#define Max_num 300
+#define Max_num 2000
 #define Max_prodlength 20
 
 #define Max_Vsign 128
@@ -12,7 +12,7 @@
 #define Vn_end 'f'
 
 
-#define Vt_Start 'r'
+#define Vt_Start 'p'
 #define Vt_end 'z'
 
 #define myEpsilon '@'
@@ -807,7 +807,7 @@ int params::judge(const char* sentensepath)
 			stack<int> tempstack = status;
 			for (int i = 0; i < status.size(); i++)
 			{
-				cout << tempstack.top();
+				cout << tempstack.top() << ' ';
 				tempstack.pop();
 			}
 			cout << endl;
@@ -845,7 +845,7 @@ int params::judge(const char* sentensepath)
 	}
 
 	infile.close();
-
+	
 	return -1;
 }
 
@@ -855,7 +855,7 @@ int params::judge(const char* sentensepath)
 int main()
 {
 	params param;
-	param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammar4.txt");
+	param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammarC.txt");
 	param.showGrammar();
 
 	cout << param.Vn_sum << "   " << param.Vt_sum << endl;
@@ -864,11 +864,11 @@ int main()
 	param.showFirst();
 
 	param.set_Closure_and_Action();
-	param.showClosures();
+	//param.showClosures();
 
-	param.showActionGoto();
+	//param.showActionGoto();
 
-	cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testsentence.txt");
+	cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
 
 
 	return 0;
