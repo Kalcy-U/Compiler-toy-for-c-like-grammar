@@ -2,7 +2,7 @@
 #define isVt 1
 #define isVn 2
 
-#define Max_num 300
+#define Max_num 2000
 #define Max_prodlength 20
 
 #define Max_Vsign 128
@@ -12,7 +12,7 @@
 #define Vn_end 'f'
 
 
-#define Vt_Start 'r'
+#define Vt_Start 'p'
 #define Vt_end 'z'
 
 #define myEpsilon '@'
@@ -548,6 +548,23 @@ void params::setClosure(int curclosure_num)
 					tempproj.dot = 0;
 					tempproj.next = get_firstBa(curproj);
 
+					//要查重
+					bool is_dup = false;
+					for (int m = 0; m < projcnt; m++)
+					{
+						if (curclosure[m].prod == tempproj.prod && curclosure[m].dot == tempproj.dot)//如果重了，那么就把新的后继符号集添加进原来的里面，然后继续下一个项目。
+						{
+							is_dup = true;
+							for (int n = 0; n < tempproj.next.length(); n++)
+							{
+								if (curclosure[m].next.find(tempproj.next[n]) == curclosure[m].next.npos)
+									curclosure[m].next += tempproj.next[n];
+							}
+						}
+					}
+					if (is_dup == true)
+						continue;
+
 					curclosure[projcnt] = tempproj;
 					projcnt++;
 
@@ -562,7 +579,7 @@ void params::setClosure(int curclosure_num)
 	return;
 }
 
-
+/*已弃用*/
 int params::getclosure(int buf_projcnt)
 {
 	project curproj;
@@ -827,7 +844,7 @@ int params::judge(const char* sentensepath)
 			stack<int> tempstack = status;
 			for (int i = 0; i < status.size(); i++)
 			{
-				cout << tempstack.top();
+				cout << tempstack.top() << ' ';
 				tempstack.pop();
 			}
 			cout << endl;
@@ -865,7 +882,7 @@ int params::judge(const char* sentensepath)
 	}
 
 	infile.close();
-
+	
 	return -1;
 }
 
