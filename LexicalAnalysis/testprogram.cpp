@@ -1,16 +1,15 @@
-sr(){sr;sr;sr=q;r=q;v(ryr){r=r+r*r+q;}w{r=r;}x(ryq){r=r*q;}uq;}
+sr(){sr;sr;sr=q;r=q;v(ry(r+r)){r=r+(r*r+q);}w{r=r;}x(ryq){r=r*q;}uq;}
 
 测试程序：
 int program()
 {
 	int i;
 	int j;
-	int if123;
-	if123 = 100;
+	int if123 = 100;
 	i = 0;
-	if (a > b)
+	if (a > (b + c))
 	{
-		j = a + b * c + 1;
+		j = a + (b * c + 1);
 	}
 	else
 	{

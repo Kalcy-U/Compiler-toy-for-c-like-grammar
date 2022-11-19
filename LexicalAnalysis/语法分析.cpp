@@ -538,6 +538,23 @@ void params::setClosure(int curclosure_num)
 					tempproj.dot = 0;
 					tempproj.next = get_firstBa(curproj);
 
+					//要查重
+					bool is_dup = false;
+					for (int m = 0; m < projcnt; m++)
+					{
+						if (curclosure[m].prod == tempproj.prod && curclosure[m].dot == tempproj.dot)//如果重了，那么就把新的后继符号集添加进原来的里面，然后继续下一个项目。
+						{
+							is_dup = true;
+							for (int n = 0; n < tempproj.next.length(); n++)
+							{
+								if (curclosure[m].next.find(tempproj.next[n]) == curclosure[m].next.npos)
+									curclosure[m].next += tempproj.next[n];
+							}
+						}
+					}
+					if (is_dup == true)
+						continue;
+
 					curclosure[projcnt] = tempproj;
 					projcnt++;
 
@@ -552,7 +569,7 @@ void params::setClosure(int curclosure_num)
 	return;
 }
 
-
+/*已弃用*/
 int params::getclosure(int buf_projcnt)
 {
 	project curproj;
@@ -856,6 +873,8 @@ int main()
 {
 	params param;
 	param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammarC.txt");
+	//param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammar3.txt");
+
 	param.showGrammar();
 
 	cout << param.Vn_sum << "   " << param.Vt_sum << endl;
@@ -868,7 +887,8 @@ int main()
 
 	//param.showActionGoto();
 
-	cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
+	//cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
+	cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testsentence.txt");
 
 
 	return 0;

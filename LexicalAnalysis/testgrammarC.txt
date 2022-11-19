@@ -1,4 +1,4 @@
-45
+51
 S->Ar()C
 A->s
 A->t
@@ -13,8 +13,8 @@ G->IG
 G->I
 I->L
 L->uN
-L->uW;
-N->O;
+N->W;
+W->O
 O->P
 O->PY
 Y->+P
@@ -30,21 +30,19 @@ Z->/QZ
 Q->0
 Q->r
 Q->q
+Q->rR
+Q->(W)
 I->M
 M->r=N
-M->r=W;
 W->Oc
 c->yO
 c->yOc
 I->K
 K->x(W)C
-W->O
-W->Oc
 I->J
 J->v(W)C
 J->v(W)Cb
 b->wC
-Q->rR
 R->(V)
 R->()
 V->U
@@ -52,6 +50,8 @@ U->W
 U->Wf
 f->,W
 f->,Wf
+
 后面这一堆还有点bug
+但好像是函数调用的 不测的话用不到
 
 

@@ -1,5 +1,11 @@
-4
+10
 A->S
-S->By
-B->xB
-B->x
+S->P
+P->Q
+P->QZ
+Z->*Q
+Z->/Q
+Z->*QZ
+Z->/QZ
+Q->(S)
+Q->r
