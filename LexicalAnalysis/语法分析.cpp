@@ -24,6 +24,7 @@
 #include<fstream>
 #include<stack>
 #include<queue>
+#include<sstream>
 using namespace std;
 
 /*
@@ -143,7 +144,7 @@ struct params
 	打印文法。
 	有空加个输出到文档
 	*/
-	void showGrammar();
+	void showGrammar(const char* fname = NULL);
 
 	/*
 	计算First表。
@@ -161,7 +162,7 @@ struct params
 	/*
 	打印First表。
 	*/
-	void showFirst();
+	void showFirst(const char* fname = NULL);
 
 
 
@@ -174,7 +175,7 @@ struct params
 	/*
 	打印项目集族
 	*/
-	void showClosures();
+	void showClosures(const char* fname = NULL);
 
 
 
@@ -206,7 +207,7 @@ struct params
 	/*
 	打印ActionGoto表。	
 	*/
-	void showActionGoto();
+	void showActionGoto(const char* fname = NULL);
 
 	/*
 	获得项目的向前搜索符。
@@ -308,19 +309,24 @@ void params::getGrammar(const char* grammarfilepath)
 	return;
 };
 
-void params::showGrammar()
+void params::showGrammar(const char* fname )
 {
+	std::stringstream  ss;
+	fstream fout(fname, ios::out | ios::binary);
 	for (int i = 0; i < prodsum; i++)
 	{
 		int prodlen = strlen(G[i]);
 		char* curprod = G[i];
 
-		cout << curprod[0] << "->";
+		ss << curprod[0] << "->";
 		for (int j = 1; j < prodlen; j++)
-			cout << curprod[j];
-		cout << endl;
+			ss << curprod[j];
+		ss << endl;
 	}
-
+	cout << ss.str();
+	if (fname != NULL)
+		fout << ss.str();
+	fout.close();
 	return;
 };
 
@@ -390,15 +396,17 @@ void params::set_First()
 	return;
 }
 
-void params::showFirst()
+void params::showFirst(const char* fname )
 {
-	cout << "    ";
+	std::stringstream  ss;
+	fstream fout(fname, ios::out | ios::binary);
+	ss << "    ";
 	for (int j = 0; j < Max_Vsign; j++)
 	{
 		if (isV[j] == isVt)
-			cout << char(j) << " ";
+			ss << char(j) << " ";
 	}
-	cout << endl;
+	ss << endl;
 	
 	for (int i = 0; i < Max_Vn; i++)
 	{
@@ -411,7 +419,7 @@ void params::showFirst()
 		if (isV[k] != isVn)
 			continue;
 		else
-			cout << char(k) << " : ";
+			ss << char(k) << " : ";
 
 
 
@@ -427,13 +435,16 @@ void params::showFirst()
 		{
 			if (isV[j] == isVt)
 			{
-				cout << (int)First[i][j] << " ";
+				ss << (int)First[i][j] << " ";
 			}
 		}
 
-		cout << endl;
+		ss << endl;
 	}
-
+	cout << ss.str();
+	if (fname != NULL)
+		fout << ss.str();
+	fout.close();
 	return;
 }
 
@@ -738,61 +749,73 @@ void params::set_Closure_and_Action()
 }
 
 
-void params::showClosures()
+void params::showClosures(const char* fname)
 {
+
+	std::stringstream  ss;
+	fstream fout(fname, ios::out | ios::binary);
 	for (int i = 0; i < closure_sum; i++)
 	{
-		cout << "I" << i << " : " << endl;
+		ss << "I" << i << " : " << endl;
 
 		for (int j = 0; j < closure_eachlength[i]; j++)
 		{
 			
-			cout << G[closure[i][j].prod][0] << "->";
+			ss << G[closure[i][j].prod][0] << "->";
 
 			int k = 0;
 			for (; k < closure[i][j].dot; k++)
-				cout << G[closure[i][j].prod][k + 1];
+				ss << G[closure[i][j].prod][k + 1];
 
-			cout << '.';
+			ss << '.';
 
 			while (G[closure[i][j].prod][k + 1] != 0)
 			{
-				cout << G[closure[i][j].prod][k + 1];
+				ss << G[closure[i][j].prod][k + 1];
 				k++;
 			}
 
 
-			cout << " , " << closure[i][j].next << " " << endl;
+			ss << " , " << closure[i][j].next << " " << endl;
 		}
 	}
-
+	cout << ss.str();
+	if (fname != NULL)
+		fout << ss.str();
+	fout.close();
 	return;
 }
 
 
-void params::showActionGoto()
+void params::showActionGoto(const char* fname)
 {
-	cout << "   ";
+
+	std::stringstream  ss;
+	fstream fout(fname, ios::out | ios::binary);
+	ss << "   ";
 
 	for (int j = 0; j < Max_Vsign; j++)
 	{
 		if (j == myFinal || isV[j] != None)
-			cout << "  " << (char)j << "  ";
+			ss << "," << (char)j;
 	}
-	cout << endl;
+	ss <<","<< endl;
 
 	for (int i = 0; i < closure_sum; i++)
 	{
-		cout <<' '<< i << " ";
+		ss << i << ",";
 		for (int j = 0; j < Max_Vsign; j++)
 		{
 			if (j == myFinal || isV[j] != None)
-				cout <<' '<< ActionGoto[i][j].kind << ActionGoto[i][j].num << "  ";
+				ss << ActionGoto[i][j].kind << ActionGoto[i][j].num<<',' ;
 		}
 
-		cout << endl;
+		ss << endl;
 	}
-
+	//cout << ss.str();
+	if (fname != NULL)
+		fout << ss.str();
+	fout.close();
 	return;
 }
 
@@ -872,23 +895,23 @@ int params::judge(const char* sentensepath)
 int main()
 {
 	params param;
-	param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammarC.txt");
+	param.getGrammar(".\\testgrammarC.txt");
 	//param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammar3.txt");
 
-	param.showGrammar();
+	param.showGrammar("grammar.xls");
 
 	cout << param.Vn_sum << "   " << param.Vt_sum << endl;
 
 	param.set_First();
-	param.showFirst();
+	param.showFirst("First.xls");
 
 	param.set_Closure_and_Action();
-	//param.showClosures();
+	param.showClosures("Closures.xls");
 
-	//param.showActionGoto();
+	param.showActionGoto("ActionGo.csv");
 
 	//cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
-	cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testsentence.txt");
+	cout << param.judge(".\\testsentence.txt");
 
 
 	return 0;
