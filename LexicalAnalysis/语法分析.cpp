@@ -26,7 +26,6 @@
 #include<queue>
 #include<sstream>
 using namespace std;
-
 /*
 用于存放符号表，项目表等必要数据
 */
@@ -221,7 +220,6 @@ struct params
 	int judge(const char* sentensepath);
 
 };
-
 
 
 params::params()
@@ -913,6 +911,7 @@ int main()
 	//cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
 	cout << param.judge(".\\testsentence.txt");
 
+	cout << param.judge("testsentence.txt");
 
 	return 0;
 }
