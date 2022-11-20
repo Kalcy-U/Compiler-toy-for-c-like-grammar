@@ -1,9 +1,7 @@
-S Program
+S 开始符号
 A 类型
-B ID
+B Program
 C 语句块
-D 
-E 数字
 F 内部声明
 G 语句串
 H 内部变量声明
@@ -17,22 +15,20 @@ O 加法表达式
 P 项
 Q 因子
 R FTYPE
-T call
 U 实参列表
 V 实参
+W 不带分号的表达式
 
-X 字母/数字
-Y ;内部变量声明
-Z 语句
-a 表达式
+Y 加减项
+Z 乘除因子
+
 b else语句块
 c relop加法表达式
-d +项-项
-e *因子/因子
-f ,表达式
-g 开始符号S'
 
-r 字母
+f ,表达式
+
+q num
+r identifier
 s int
 t void
 u return
@@ -40,3 +36,15 @@ v if
 w else
 x while
 y relop
+, 逗号
++ 加号
+- 减号
+* 乘号
+/ 除号
+( 左括号
+) 右括号
+= 等号
+{ 左大括号
+} 右大括号
+; 分号
+

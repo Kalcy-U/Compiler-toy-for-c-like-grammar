@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+LexicalAnalysis/lexicalAnalysis.c(弃用)
+LexicalAnalysis/语法分析.cpp(移植到paser.cpp)

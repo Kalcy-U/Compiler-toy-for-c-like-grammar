@@ -9,10 +9,7 @@ int  program()
 	i = 0;
 	if (a > (b + c))
 	{
-<<<<<<< Updated upstream
-=======
-		//char buffer[]="printf(' ');";
->>>>>>> Stashed changes
+
 		j = a + (b * c + 1);
 	}
 	else/**/

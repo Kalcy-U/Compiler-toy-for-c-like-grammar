@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define None 0
 #define isVt 1
 #define isVn 2
@@ -25,6 +26,8 @@
 #include<stack>
 #include<queue>
 #include<sstream>
+#include"tree.h"
+#include<map>
 using namespace std;
 /*
 用于存放符号表，项目表等必要数据
@@ -113,7 +116,15 @@ struct params
 	*/
 	elem* ActionGoto[Max_num];
 
+	/*
+用于建树：
+*/
+	vector<node*> nodes;
+	vector<bool> available;
+	int nodesum = 0;
 
+	node* root;
+	FILE* dotp;
 
 	friend bool operator==(const project& proj1, const project& proj2)
 	{
@@ -144,7 +155,11 @@ struct params
 	有空加个输出到文档
 	*/
 	void showGrammar(const char* fname = NULL);
-
+	/*
+	符号对照表及构建
+	*/
+	map<char, string> trans;
+	void setTrans(const char* filepath);
 	/*
 	计算First表。
 	*已完成
@@ -237,6 +252,27 @@ params::params()
 		closure_eachlength[i] = 0;
 	}
 
+	return;
+}
+
+void params::setTrans(const char* filepath)
+{
+	ifstream infile;
+	infile.open(filepath, ios::in || ios::binary);
+
+	char c;
+	string str;
+
+	while (infile.good())
+	{
+		infile >> c;
+		infile >> str;
+		if (!infile.good())
+			break;
+		trans[c] = str;
+	}
+
+	infile.close();
 	return;
 }
 
@@ -821,9 +857,10 @@ void params::showActionGoto(const char* fname)
 
 int params::judge(const char* sentensepath)
 {
+
+
 	stack<int> status;
 	string SRstr = "";
-
 	string instr;
 
 	ifstream infile;
@@ -833,6 +870,24 @@ int params::judge(const char* sentensepath)
 	instr += myFinal;
 
 	status.push(0);
+
+	/*
+	建树的准备
+	vector<node*> nodes;
+	vector<int> available;
+	int nodesum;
+	*/
+	/*-------------------------*/
+	dotp = fopen("try.dot", "w");
+	fprintf(dotp, "digraph G\n{\nnode[fontname=\"FangSong\"]");
+	for (int i = 0; i < instr.length() - 1; i++)
+	{
+		node* temp = new node();
+		temp->c = instr[i];
+		nodes.push_back(temp);
+		available.push_back(true);
+		nodesum++;
+	}
 
 
 	bool isdone = false;
@@ -855,6 +910,27 @@ int params::judge(const char* sentensepath)
 		if (ActionGoto[cur][instr[0]].kind == 'a')//接受状态
 		{
 			isdone = true;
+
+			/*建树节点*/
+			node* newnode = new node();
+			newnode->c = G[0][0];
+			newnode->parent = NULL;
+			for (int i = 0; i < nodesum; i++)
+				if (available[i] == true)
+				{
+					newnode->son.push_back(nodes[i]);
+					nodes[i]->parent = newnode;
+
+					fprintf(dotp, "%s%d->%s%d;\n", trans[G[0][0]].c_str(), nodesum, trans[nodes[i]->c].c_str(), i);
+				}
+
+			nodes.push_back(newnode);
+			available.push_back(true);
+			nodesum++;
+			root = newnode;
+			fprintf(dotp, "\n}\n");
+			fclose(dotp);
+			/*---------------*/
 			return 1;
 		}
 		else if (ActionGoto[cur][instr[0]].kind == 's')//移进
@@ -871,6 +947,35 @@ int params::judge(const char* sentensepath)
 			while (G[rprod][prodBlength + 1] != 0)
 				prodBlength++;
 
+			/*建树节点*/
+			node* newnode = new node();
+			for (int i = 0; i < prodBlength; i++)
+			{
+				bool isdone = false;
+				for (int j = 0; j < nodesum; j++)
+				{
+					if (available[j] == false)
+						continue;
+					if (isdone)
+						break;
+					if (nodes[j]->c == G[rprod][i + 1])
+					{
+						available[j] = false;
+						nodes[j]->parent = newnode;
+						newnode->son.push_back(nodes[j]);
+						isdone = true;
+						fprintf(dotp, "%s%d->%s%d;\n", trans[G[rprod][0]].c_str(), nodesum, trans[nodes[j]->c].c_str(), j);
+					}
+				}
+			}
+
+			newnode->c = G[rprod][0];
+			nodes.push_back(newnode);
+			available.push_back(true);
+			nodesum++;
+			/*---------------*/
+
+
 			for (int i = 0; i < prodBlength; i++)
 				status.pop();
 
@@ -884,11 +989,9 @@ int params::judge(const char* sentensepath)
 	}
 
 	infile.close();
-	
+
 	return -1;
 }
-
-
 
 
 int get_param(const char* fgramm,const char* fsentence)
@@ -896,22 +999,27 @@ int get_param(const char* fgramm,const char* fsentence)
 	params param;
 	param.getGrammar(fgramm);
 	//param.getGrammar("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testgrammar3.txt");
-
-	param.showGrammar("grammar.xls");
+	param.setTrans("对照表new.txt");
+	param.showGrammar("./output/grammar.txt");
 
 	cout << param.Vn_sum << "   " << param.Vt_sum << endl;
 
 	param.set_First();
-	param.showFirst("First.txt");
+	param.showFirst("./output/First.txt");
 
 	param.set_Closure_and_Action();
-	param.showClosures("Closures.txt");
+	param.showClosures("./output/Closures.txt");
 
-	param.showActionGoto("ActionGo.txt");
+	param.showActionGoto("./output/ActionGo.txt");
 
 	//cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
+	int pres = param.judge(fsentence);
+	cout << ( pres== 1 ? "success\n" : "fail\n");
 	
-	cout << param.judge(fsentence);
-
+	if (pres) {
+		system("cd bin && dot -Tpng ../try.dot -o ../output/tree.png\n");
+		system("cd output && tree.png\n");
+	}
+	
 	return 0;
 }
