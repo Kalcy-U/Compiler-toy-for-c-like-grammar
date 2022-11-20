@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{0e91088f-08d4-4b7a-963d-e3d6c543c874}</ProjectGuid>
-    <RootNamespace>LexicalAnalysis</RootNamespace>
+    <ProjectGuid>{0E91088F-08D4-4B7A-963D-E3D6C543C874}</ProjectGuid>
+    <RootNamespace>LexerParser</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -128,7 +128,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="hello.c" />
-    <ClCompile Include="lexicalAnalysis.c" />
+    <ClCompile Include="lexicalAnalysis.cpp" />
+    <ClCompile Include="lex_param.cpp" />
+    <ClCompile Include="parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="head.h" />

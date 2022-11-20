@@ -15,11 +15,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lexicalAnalysis.c">
+    <ClCompile Include="lex_param.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lexicalAnalysis.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="parser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="hello.c">
-      <Filter>源文件</Filter>
+      <Filter>资源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

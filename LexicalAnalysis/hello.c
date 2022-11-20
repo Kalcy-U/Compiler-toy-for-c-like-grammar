@@ -1,11 +1,18 @@
-int  program(int a, int b, int c)
+int  program()
 {
-	int i;//
+	int i;
 	int j;
 	int if123=100;
+	int a= 3;
+	int b= 4;
+	int c= 2;
 	i = 0;
 	if (a > (b + c))
 	{
+<<<<<<< Updated upstream
+=======
+		//char buffer[]="printf(' ');";
+>>>>>>> Stashed changes
 		j = a + (b * c + 1);
 	}
 	else/**/
