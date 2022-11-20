@@ -1,0 +1,10 @@
+9
+A->S
+S->LZy
+Z->LZ
+Z->L
+Z->N
+Z->NZ
+L->x
+L->w
+N->0

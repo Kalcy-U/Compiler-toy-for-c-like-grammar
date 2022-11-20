@@ -6,6 +6,7 @@ int  program(int a, int b, int c)
 	i = 0;
 	if (a > (b + c))
 	{
+		char buffer[]="printf(' ');";
 		j = a + (b * c + 1);
 	}
 	else/**/

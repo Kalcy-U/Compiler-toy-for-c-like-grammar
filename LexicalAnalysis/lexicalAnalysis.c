@@ -36,7 +36,9 @@ void usage(const char* programname) {
 	printf("%s program.c\n", programname);
 	return;
 }
-int main(int argc,char** argv) {
+
+
+int main1(int argc,char** argv) {
 	
 	if(argc!=2) {
 		usage(argv[0]);
@@ -61,6 +63,7 @@ int main(int argc,char** argv) {
 		free(Id_table);
 	return 0;
 }
+
 /// <summary>
 /// 加载源程序文件到srccode指向的字符串
 /// </summary>
