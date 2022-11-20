@@ -1,0 +1,42 @@
+S Program
+A 类型
+B ID
+C 语句块
+D 
+E 数字
+F 内部声明
+G 语句串
+H 内部变量声明
+I 语句
+J if语句
+K while语句
+L return语句
+M 赋值语句
+N 表达式
+O 加法表达式
+P 项
+Q 因子
+R FTYPE
+T call
+U 实参列表
+V 实参
+
+X 字母/数字
+Y ;内部变量声明
+Z 语句
+a 表达式
+b else语句块
+c relop加法表达式
+d +项-项
+e *因子/因子
+f ,表达式
+g 开始符号S'
+
+r 字母
+s int
+t void
+u return
+v if
+w else
+x while
+y relop

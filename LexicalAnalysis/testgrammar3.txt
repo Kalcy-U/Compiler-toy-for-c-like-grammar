@@ -1,0 +1,11 @@
+10
+A->S
+S->P
+P->Q
+P->QZ
+Z->*Q
+Z->/Q
+Z->*QZ
+Z->/QZ
+Q->(S)
+Q->r

@@ -910,7 +910,8 @@ int get_param(const char* fgramm,const char* fsentence)
 	param.showActionGoto("ActionGo.txt");
 
 	//cout << param.judge("H:\\编译原理\\大作业1\\Compiler-toy-for-c-like-grammar\\LexicalAnalysis\\testprogram.cpp");
-	
+	cout << param.judge(".\\testsentence.txt");
+
 	cout << param.judge(fsentence);
 
 	return 0;
