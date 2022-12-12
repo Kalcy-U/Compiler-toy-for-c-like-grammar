@@ -852,7 +852,6 @@ void params::showActionGoto(const char* fname)
 	return;
 }
 
-//移进归约过程
 
 int params::judge(const char* sentensepath)
 {
